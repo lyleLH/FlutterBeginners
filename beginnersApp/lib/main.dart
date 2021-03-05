@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:platform_tab_bar_control/platform_tab_bar_control.dart';
-
 void main() {
   runApp(MyApp());
 }
