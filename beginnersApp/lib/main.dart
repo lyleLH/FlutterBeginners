@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:beginnersApp/favor.dart';
-import 'package:beginnersApp/friend.dart';
-import 'package:beginnersApp/mock_values.dart';
-import 'package:flutter/services.dart';
-import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
-import 'package:intl/intl.dart';
 
+import 'package:platform_tab_bar_control/platform_tab_bar_control.dart';
 
 void main() {
   runApp(MyApp());
@@ -34,327 +29,161 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: FavorsPage(
-      ),
+      home: MainScreen(),
     );
   }
 }
 
-class FavorsPage extends StatefulWidget {
-  FavorsPage({
-    Key key,
-  }) : super(key: key);
-
+class MainScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => FavorsPageState();
+  State<StatefulWidget> createState() => _MainScreenState();
 }
 
-class FavorsPageState extends State<FavorsPage> {
-  // using mock values from mock_favors dart file for now
-  List<Favor> pendingAnswerFavors;
-  List<Favor> acceptedFavors;
-  List<Favor> completedFavors;
-  List<Favor> refusedFavors;
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
 
-  @override  void initState() {
-    super.initState();
-    pendingAnswerFavors = List();
-    acceptedFavors = List();
-    completedFavors = List();
-    refusedFavors = List();
-    loadFavors();
-  }
-
-  void loadFavors() {
-    pendingAnswerFavors.addAll(mockPendingFavors);
-    acceptedFavors.addAll(mockDoingFavors);
-    completedFavors.addAll(mockCompletedFavors);
-    refusedFavors.addAll(mockRefusedFavors);
-  }
-
-  // part of FavorsPageState class
-  static FavorsPageState of(BuildContext context) {
-    return context.findAncestorStateOfType<FavorsPageState>();
-  }
-
-  void refuseToDo(Favor favor) {
-    setState(() {
-      pendingAnswerFavors.remove(favor);
-      refusedFavors.add(favor.copyWith(accepted: false));
-    });
-  }
-
-  void acceptToDo(Favor favor) {
-      setState(() {
-        pendingAnswerFavors.remove(favor);
-
-        acceptedFavors.add(favor.copyWith(accepted: true));
-      });
-  }
-
-  Widget _buildCategoryTab(String title) {
-      return Tab(
-        child: Text(title),
-      );
-    }
-
-    Row _itemHeader(Favor favor) {
-      return Row(
-        children: <Widget>[
-          CircleAvatar(
-            backgroundImage: NetworkImage(
-              favor.friend.photoURL,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-                padding: EdgeInsets.only(left: 8.0),
-                child: Text("${favor.friend.name} asked you to...")
-            ),
-          ),
-        ],
-      );
-    }
-
-    Widget _itemFooter(Favor favor) {
-      if (favor.isCompleted) {
-        final format = DateFormat();
-        return Container(
-          margin: EdgeInsets.only(top: 8.0),
-          alignment: Alignment.centerRight,
-          child: Chip(
-            label: Text("Completed at: ${format.format(favor.completed)}"),
-          ),
-        );
-      }
-      if (favor.isRequested) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            FlatButton(
-              child: Text("Refuse"),
-              onPressed: () {
-                FavorsPageState.of(context).refuseToDo(favor);
-                // we have changed _itemFooter to get the context so we
-                // can use it to fetch the favors page state
-              },
-            ),
-            FlatButton(
-              child: Text("Do"),
-              onPressed: () {
-                FavorsPageState.of(context).acceptToDo(favor);
-              },
-            )
-          ],
-        );
-      }
-      if (favor.isDoing) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            FlatButton(
-              child: Text("give up"),
-              onPressed: () {},
-            ),
-            FlatButton(
-              child: Text("complete"),
-              onPressed: () {},
-            )
-          ],
-        );
-      }
-      return Container();
-    }
-
-    Widget _favorsList(String title, List<Favor> favors) {
-      return Column(
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          Padding(
-            child: Text(title),
-            padding: EdgeInsets.only(top: 16.0),
-          ),
-          Expanded(
-            child: ListView.builder(
-              physics: BouncingScrollPhysics(),
-              itemCount: favors.length,
-              itemBuilder: (BuildContext context, int index) {
-                final favor = favors[index];
-                return Card(
-                  key: ValueKey(favor.uuid),
-                  margin: EdgeInsets.symmetric(vertical: 10.0,
-                      horizontal: 25.0),
-                  child: Padding(
-                    child: Column(
-                      children: <Widget>[
-                        _itemHeader(favor),
-                        Text(favor.description),
-                        _itemFooter(favor)
-                      ],
-                    ),
-                    padding: EdgeInsets.all(8.0),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-    }
-
-    @override Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Your favors"),
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: [
-              _buildCategoryTab("Requests"),
-              _buildCategoryTab("Doing"),
-              _buildCategoryTab("Completed"),
-              _buildCategoryTab("Refused"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _favorsList("Pending Requests", pendingAnswerFavors),
-            _favorsList("Doing", acceptedFavors),
-            _favorsList("Completed", completedFavors),
-            _favorsList("Refused", refusedFavors),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => RequestFavorPage(
-                  friends: mockFriends,
-                ),
-              ),
-            );
-          },
-          tooltip: 'Ask a favor',
-          child: Icon(Icons.add),
-        ),
-      ),
-    );
-  }
-}
-
-
-class RequestFavorPage extends StatefulWidget {
-  List<Friend> friends;
-
-  RequestFavorPage({Key key, this.friends}) : super(key: key);
-
-  @override
-  RequestFavorPageState createState() {
-    return new RequestFavorPageState();
-  }
-}
-
-class RequestFavorPageState extends State<RequestFavorPage> {
-  final _formKey = GlobalKey<FormState>();
-  Friend _selectedFriend = null;
-
-  static RequestFavorPageState of(BuildContext context) {
-    return context.findAncestorStateOfType<RequestFavorPageState>();
-  }
+  List<Widget> _widgetOptions = [HomePage(), HomePage(), HomePage()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Requesting a favor"),
-        leading: CloseButton(),
-        actions: <Widget>[
-          Builder(
-            builder: (context) => FlatButton(
-              child: Text("SAVE"),
-              textColor: Colors.white,
-              onPressed: () {
-                RequestFavorPageState.of(context).save();
-              },
-            ),
+      backgroundColor: Colors.white,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.camera),
+            label: "Camera",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Profile",
+          )
         ],
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              DropdownButtonFormField<Friend>(
-                value: _selectedFriend,
-                onChanged: (friend) {
-                  setState(() {
-                    _selectedFriend = friend;
-                  });
-                },
-                items: widget.friends
-                    .map(
-                      (f) => DropdownMenuItem<Friend>(
-                    value: f,
-                    child: Text(f.name),
-                  ),
-                )
-                    .toList(),
-                validator: (friend) {
-                  if (friend == null) {
-                    return "You must select a friend to ask the favor";
-                  }
-                  return null;
-                },
-              ),
-              Container(
-                height: 16.0,
-              ),
-              Text("Favor description:"),
-              TextFormField(
-                maxLines: 5,
-                inputFormatters: [LengthLimitingTextInputFormatter(200)],
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return "You must detail the favor";
-                  }
-                  return null;
-                },
-              ),
-              Container(
-                height: 16.0,
-              ),
-              Text("Due Date:"),
-
-              // DateTimePickerFormField(
-              //   inputType: InputType.both,
-              //   format: DateFormat("EEEE, MMMM d, yyyy 'at' h:mma"),
-              //   editable: false,
-              //   decoration: InputDecoration(
-              //       labelText: 'Date/Time', hasFloatingPlaceholder: false),
-              //   validator: (dateTime) {
-              //     if (dateTime == null) {
-              //       return "You must select a due date time for the favor";
-              //     }
-              //     return null;
-              //   },
-              // ),
-            ],
-          ),
-        ),
+      body: Stack(
+        children: [
+          _buildOffStageNavigator(0),
+          _buildOffStageNavigator(1),
+          _buildOffStageNavigator(2),
+        ],
       ),
     );
   }
 
-  void save() {
-    if (_formKey.currentState.validate()) {
-      // store the favor request on firebase
-      Navigator.pop(context);
-    }
+  Map<String, WidgetBuilder> _routeBuilders(BuildContext context, int index) {
+    return {
+      '/': (context) {
+        return [HomePage(), HomePage(), HomePage()].elementAt(index);
+      }
+    };
+  }
+
+  Widget _buildOffStageNavigator(int index) {
+    var routeBuilders = _routeBuilders(context, index);
+
+    return Offstage(
+      offstage: _selectedIndex != index,
+      child: Navigator(
+        onGenerateRoute: (routeSettings) {
+          return MaterialPageRoute(
+              builder: (context) => routeBuilders[routeSettings.name](context));
+        },
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.deepPurpleAccent,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            margin: EdgeInsets.all(16.0),
+            child: Text(
+              "Screen 1",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 40.0,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+          FlatButton(
+            child: Text(
+              "Next Screen",
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 25.0,
+                  fontWeight: FontWeight.bold),
+            ),
+            color: Color(0xffB398E7),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Screen2(),
+                ),
+              );
+            },
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class Screen2 extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        color: Color(0xff424250),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              margin: EdgeInsets.all(16.0),
+              child: Text(
+                "Screen 2",
+                style: TextStyle(
+                    color: Color(0xffF4C150),
+                    fontSize: 40.0,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            FlatButton(
+              color: Color(0xff33333D),
+              child: Text(
+                "Go Back",
+                style: TextStyle(
+                    color: Color(0xff1EB980),
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        ),
+      ),
+    );
   }
 }
