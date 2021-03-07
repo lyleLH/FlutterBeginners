@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import './custom_app_bar/custom_app_bar.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -50,6 +52,8 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _selectedIndex,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+        selectedFontSize: 14,
+        unselectedFontSize: 14,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -150,6 +154,26 @@ class Screen2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: CustomAppBar(
+        title: Text("商品列表"),
+        leading: new IconButton(
+          tooltip: '返回上一页',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+            //_nextPage(-1);
+          },
+        ),
+      ),
+      // AppBar(
+      //   title: Text(
+      //     "商品列表",
+      //     style: TextStyle(color: Colors.black),
+      //   ),
+      //   backgroundColor: Colors.white,
+      //   automaticallyImplyLeading: true,
+
+      // ),
       body: Container(
         color: Color(0xff424250),
         alignment: Alignment.center,
